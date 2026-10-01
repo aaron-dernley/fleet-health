@@ -1,0 +1,17 @@
+manifestVersion: 1
+name: "@aaronge/fleet-health-loki"
+version: "2026.10.01.1"
+description: "Evidence-preserving instant LogQL queries against Loki — an explicit time argument rather than an implicit now, so a captured result is reproducible and auditable."
+
+repository: https://github.com/aaron-dernley/fleet-health
+
+models:
+  - loki.ts
+
+additionalFiles:
+  - README.md
+  - LICENSE
+
+platforms:
+  - linux-x86_64
+  - darwin-aarch64

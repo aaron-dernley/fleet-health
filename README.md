@@ -2,9 +2,13 @@
 
 Cross-cutting health check for every `swamp-workflow-*` timer on this
 host, spanning both Grafana dashboards (`fun-stuff` and
-`rpi-metrics-bridge`). Like `rpi-workflows`, this repo publishes no
-extension of its own — it pulls already-published extensions and a small
-local Loki-query model, then asserts across them.
+`rpi-metrics-bridge`). Like `rpi-workflows`, most of what's here is
+host-specific glue — pulled extensions and one-instance-per-unit model
+configs, not meant to be reused elsewhere. The one exception is
+`@aaronge/fleet-health-loki` (see
+[below](#aaronge-fleet-health-loki-published-extension)), a small,
+general-purpose Loki-query model published to the swamp registry in its
+own right.
 
 ## What it checks
 
@@ -85,7 +89,7 @@ eventually show it as stale.
 ```sh
 swamp extension pull @aaronge/systemd-panel
 swamp extension pull @dieter/prometheus
-# @aaronge/fleet-health-loki is a local model in this repo — no pull needed
+swamp extension pull @aaronge/fleet-health-loki
 
 swamp model create @dieter/prometheus prom \
   --global-arg baseUrl=http://localhost:9099
@@ -143,6 +147,67 @@ Added to the `rpi-metrics-bridge` dashboard (not `fun-stuff`) since this
 is fundamentally an ops/infra artifact — a "Fleet Health" row with
 Units Monitored, Stale Exports, New Errors, a freshness stat for
 `fleet-health.prom` itself, and a per-unit status table.
+
+## @aaronge/fleet-health-loki (published extension)
+
+Evidence-preserving instant [LogQL](https://grafana.com/docs/loki/latest/query/)
+queries against [Loki](https://grafana.com/oss/loki/), mirroring
+[`@dieter/prometheus`](https://github.com/Dieterbe/swamp-prometheus)'s
+design: an explicit `time` argument rather than an implicit "now", so a
+captured result is reproducible and auditable. Built for
+`count_over_time(...)`-style queries that answer "how many matching log
+lines in this window" without pulling the lines themselves — the shape
+a health check needs, not a log browser. This is the one piece of this
+repo meant for reuse outside it; everything else above is specific to
+this host's own fleet.
+
+### Installation
+
+```sh
+swamp extension pull @aaronge/fleet-health-loki
+```
+
+### Usage
+
+```sh
+swamp model create @aaronge/fleet-health-loki loki \
+  --global-arg baseUrl=http://localhost:3100
+
+swamp model method run loki query-at \
+  --input logql='count_over_time({job="myapp"} |= "error" [1h])' \
+  --input time=2026-10-01T09:00:00Z \
+  --input name=myapp-errors
+
+swamp model output get loki --json
+```
+
+`time` takes an RFC3339 or Unix timestamp — never "now" — so two runs
+with the same `time` produce the same result, and the query that was
+actually evaluated (including the exact timestamp) is preserved
+alongside the answer. `name` must be lowercase letters/digits/hyphens/
+underscores — it's the instance name this particular query's result is
+stored under, so running several different checks against the same
+`loki` model instance keeps each one's history separate.
+
+### Global arguments
+
+| Arg              | Default      | Notes                              |
+| ----------------- | ------------ | ----------------------------------- |
+| `baseUrl`         | _(required)_ | Loki base URL, e.g. `http://localhost:3100`. |
+| `timeoutSeconds`  | `30`         | Request timeout.                    |
+
+### How it works
+
+The `query-at` method sends `logql` and `time` to Loki's
+`/loki/api/v1/query` instant-query endpoint (not `/query_range` — this
+model is for aggregate counts, not browsing raw lines) and stores the
+parsed result: each returned series' labels and value, plus
+`totalCount` (the sum across every series — for an ungrouped query
+that's just the one number; for a query with grouping labels it's the
+total across all of them). A Loki-side query error (bad LogQL, timeout)
+is recorded in the result rather than thrown, so a workflow can assert
+on `status == "error"` explicitly instead of the step just failing
+outright with no detail.
 
 ## License
 
