@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 90b11acb-f8f1-4850-a290-e1d1969edc16
+name: unit-can-i-hang-my-washing-out
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-can-i-hang-my-washing-out.timer
+  logUnit: swamp-workflow-can-i-hang-my-washing-out.service
+  kind: timer
+  label: can-i-hang-my-washing-out
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

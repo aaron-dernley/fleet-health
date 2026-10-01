@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 6ef1881f-7552-450f-acc6-de17b1a7ebc9
+name: unit-iss-tracker
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-iss-tracker.timer
+  logUnit: swamp-workflow-iss-tracker.service
+  kind: timer
+  label: iss-tracker
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

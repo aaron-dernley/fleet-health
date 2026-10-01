@@ -1,0 +1,46 @@
+{
+  "@dieter/prometheus": {
+    "version": "2026.08.22.2",
+    "pulledAt": "2026-10-01T08:21:06.807Z",
+    "files": [
+      ".swamp/bundles/b695d9cd/prometheus.js",
+      ".swamp/pulled-extensions/@dieter/prometheus/files/LICENSE",
+      ".swamp/pulled-extensions/@dieter/prometheus/files/README.md",
+      ".swamp/pulled-extensions/@dieter/prometheus/manifest.yaml",
+      ".swamp/pulled-extensions/@dieter/prometheus/models/prometheus.ts"
+    ],
+    "checksum": "8b90c7077a6a2a2214dd849030279d2396b9fd8372adcd65d3f6135a3580e444",
+    "filesChecksum": "cad30a8a3e67c65ccede7fae0e568eede93088a8bd20080db938c5341840b8e7",
+    "serverUrl": "https://swamp-club.com"
+  },
+  "@aaronge/systemd-panel": {
+    "version": "2026.10.01.3",
+    "pulledAt": "2026-10-01T08:51:22.576Z",
+    "files": [
+      ".swamp/bundles/c1933d15/systemd_unit.js",
+      ".swamp/pulled-extensions/@aaronge/systemd-panel/files/LICENSE",
+      ".swamp/pulled-extensions/@aaronge/systemd-panel/files/README.md",
+      ".swamp/pulled-extensions/@aaronge/systemd-panel/files/swamp-panel",
+      ".swamp/pulled-extensions/@aaronge/systemd-panel/manifest.yaml",
+      ".swamp/pulled-extensions/@aaronge/systemd-panel/models/systemd_unit.ts"
+    ],
+    "checksum": "a2898222c90ae1448d6970b5f1489a405f37927267c1c0c67e24f2922b3f104e",
+    "filesChecksum": "49befbbe40b8623315e8bdb3674450f1af461a0783ac973d8f332d3019812c0a",
+    "serverUrl": "https://swamp-club.com"
+  },
+  "@svendowideit/systemd-service": {
+    "version": "2026.09.24.1",
+    "pulledAt": "2026-10-01T08:21:38.990Z",
+    "files": [
+      ".swamp/bundles/b04c5b9e/systemd_service.js",
+      ".swamp/pulled-extensions/@svendowideit/systemd-service/files/LICENSE.txt",
+      ".swamp/pulled-extensions/@svendowideit/systemd-service/files/README.md",
+      ".swamp/pulled-extensions/@svendowideit/systemd-service/files/systemd_service_test.ts",
+      ".swamp/pulled-extensions/@svendowideit/systemd-service/manifest.yaml",
+      ".swamp/pulled-extensions/@svendowideit/systemd-service/models/systemd_service.ts"
+    ],
+    "checksum": "77a2b3369f7bd63c14070b493633c32f3a0bbaf84f1d0a0e3a926f21fbe16d0f",
+    "filesChecksum": "532e66026800045a34b242d9509b1f0569addc96c94fe773db6e92d6ccdee13c",
+    "serverUrl": "https://swamp-club.com"
+  }
+}

@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 1e5b879d-b967-409f-8619-e773c8f04222
+name: unit-package-archaeology
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-package-archaeology.timer
+  logUnit: swamp-workflow-package-archaeology.service
+  kind: timer
+  label: package-archaeology
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

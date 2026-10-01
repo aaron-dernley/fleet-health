@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 6c79e8e6-92a2-4f6d-ab3d-285f9d9578fd
+name: unit-rpi-metrics-bridge
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-rpi-metrics-bridge.timer
+  logUnit: swamp-workflow-rpi-metrics-bridge.service
+  kind: timer
+  label: rpi-metrics-bridge
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

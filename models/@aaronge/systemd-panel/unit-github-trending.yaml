@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 6cd1ca6e-79aa-49a1-b9e5-083d5772fa2e
+name: unit-github-trending
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-github-trending.timer
+  logUnit: swamp-workflow-github-trending.service
+  kind: timer
+  label: github-trending
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

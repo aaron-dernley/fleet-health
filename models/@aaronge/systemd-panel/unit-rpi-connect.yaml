@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: f32b9325-13b5-4f10-9003-19f35d3b4971
+name: unit-rpi-connect
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-rpi-connect.timer
+  logUnit: swamp-workflow-rpi-connect.service
+  kind: timer
+  label: rpi-connect
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

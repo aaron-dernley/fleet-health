@@ -1,0 +1,218 @@
+id: e8ddf8f3-c995-4d26-aa34-0ad47f414abd
+name: fleet-health
+description: >-
+  Cross-cutting health check for every swamp-workflow-* timer on this
+  host, spanning both Grafana dashboards (fun-stuff and rpi-metrics-bridge).
+  Checks three things: (1) each unit's own last-run status via
+  @aaronge/systemd-panel, restarting anything found in a failed state —
+  note this only helps transient failures; a unit failing from a
+  persistent external cause (a hardware fault, a port held by an
+  unrelated process) just re-fails identically; (2) whether every
+  Prometheus textfile export is still within its own expected freshness
+  window; (3) new error-level log lines across both the "fun" and "core"
+  journald/Promtail/Loki families, deliberately excluding three
+  already-characterized, already-visible conditions so this surfaces NET
+  NEW problems rather than re-alarming on known ones: the ongoing PCIe
+  link-degraded hardware fault (link-integrity has its own 5-minute
+  assert for that already), rpi-connect's expected "not signed in"
+  (explicitly non-blocking by its own design), and iss-tracker's
+  occasional "fetch failed" against Open Notify's public HTTP API (no
+  SLA, self-heals on the next 5-minute retry). gatedUnits deliberately
+  excludes rpi-workflows-link-integrity from the pass/fail gate for the
+  same reason — it's still synced and restart-attempted via `units`
+  (so it stays visible in the exported metrics), just not double-alarmed
+  here on top of its own dedicated check.
+version: 1
+inputs:
+  properties:
+    units:
+      type: array
+      items: { type: string }
+      description: >-
+        Every monitored unit's systemd-panel instance name — synced,
+        restarted-if-failed, and exported for every entry.
+      default:
+        - unit-can-i-hang-my-washing-out
+        - unit-github-trending
+        - unit-host-health
+        - unit-iss-tracker
+        - unit-news-w-anchor
+        - unit-package-archaeology
+        - unit-rpi-boot-config
+        - unit-rpi-camera
+        - unit-rpi-connect
+        - unit-rpi-gpio-inventory
+        - unit-rpi-health
+        - unit-rpi-metrics-bridge
+        - unit-rpi-workflows-link-integrity
+        - unit-rpi-workflows-power-integrity
+        - unit-rpi-workflows-thermal-integrity
+    gatedUnits:
+      type: array
+      items: { type: string }
+      description: >-
+        Subset of `units` whose failure actually fails this workflow's
+        own run. Excludes unit-rpi-workflows-link-integrity — see the
+        workflow description for why.
+      default:
+        - unit-can-i-hang-my-washing-out
+        - unit-github-trending
+        - unit-host-health
+        - unit-iss-tracker
+        - unit-news-w-anchor
+        - unit-package-archaeology
+        - unit-rpi-boot-config
+        - unit-rpi-camera
+        - unit-rpi-connect
+        - unit-rpi-gpio-inventory
+        - unit-rpi-health
+        - unit-rpi-metrics-bridge
+        - unit-rpi-workflows-power-integrity
+        - unit-rpi-workflows-thermal-integrity
+tags: {}
+jobs:
+  - name: now
+    description: Capture a single, reproducible evaluation timestamp for this run.
+    dependsOn: []
+    steps:
+      - name: capture
+        task:
+          type: model_method
+          modelType: "command/shell"
+          modelName: now
+          methodName: execute
+          inputs:
+            run: date -u +%Y-%m-%dT%H:%M:%SZ
+        dependsOn: []
+
+  - name: probe
+    description: Gather current state from every unit, Prometheus, and Loki.
+    dependsOn:
+      - job: now
+        condition:
+          type: succeeded
+    steps:
+      - name: sync-${{ self.unit }}
+        forEach:
+          item: unit
+          in: ${{ inputs.units }}
+        task:
+          type: model_method
+          modelIdOrName: ${{ self.unit }}
+          methodName: sync
+        dependsOn: []
+
+      - name: freshness
+        task:
+          type: model_method
+          modelIdOrName: prom
+          methodName: query-at
+          inputs:
+            name: freshness
+            time: ${{ data.latest("now", "result").attributes.stdout }}
+            promql: >-
+              (time() - node_textfile_mtime_seconds{file=~".*iss-tracker.prom"} > 600)
+              or (time() - node_textfile_mtime_seconds{file=~".*can-i-hang-my-washing-out.prom"} > 50400)
+              or (time() - node_textfile_mtime_seconds{file=~".*github-trending.prom"} > 21600)
+              or (time() - node_textfile_mtime_seconds{file=~".*package-archaeology.prom"} > 93600)
+              or (time() - node_textfile_mtime_seconds{file=~".*news-w-anchor.prom"} > 93600)
+              or (time() - node_textfile_mtime_seconds{file=~".*rpi_metrics.prom"} > 300)
+        dependsOn: []
+
+      - name: new-errors
+        task:
+          type: model_method
+          modelIdOrName: loki
+          methodName: query-at
+          inputs:
+            name: new-errors
+            time: ${{ data.latest("now", "result").attributes.stdout }}
+            # Excludes by `unit` label, not message substring: every line
+            # from rpi-workflows-link-integrity and rpi-connect is already
+            # explained by their own dedicated checks (see the workflow
+            # description), so excluding by unit catches their summary/
+            # system lines too, not just the one named-assert phrase a
+            # substring filter would miss. "fetch failed" stays a
+            # text-substring exclusion since it's specific to iss-tracker's
+            # known-flaky public API call, not that unit's output as a
+            # whole.
+            logql: >-
+              count_over_time({family=~"fun|core",
+                unit!~"swamp-workflow-rpi-workflows-link-integrity.service|swamp-workflow-rpi-connect.service"}
+                |~ `(?i)error|failed|panic|exception|maximum call stack`
+                != `fetch failed`
+              [10m])
+        dependsOn: []
+
+  - name: assert
+    description: >-
+      Fail the run when a gated unit is in a failed state, a textfile
+      export has gone stale, or new (unexplained) error-level log lines
+      appeared.
+    dependsOn:
+      - job: probe
+        condition:
+          type: completed
+    steps:
+      - name: unit-ok-${{ self.unit }}
+        forEach:
+          item: unit
+          in: ${{ inputs.gatedUnits }}
+        allowFailure: false
+        task:
+          type: assert
+          expr: >-
+            data.latest(self.unit, "status").attributes.lastRunStatus != "failed"
+          message: >-
+            ${{ self.unit }} is in a failed state (lastRunDetail: ${{
+            data.latest(self.unit, "status").attributes.lastRunDetail }})
+          severity: high
+        dependsOn: []
+
+      - name: freshness-ok
+        allowFailure: false
+        task:
+          type: assert
+          expr: >-
+            size(data.latest("prom", "freshness").attributes.data.result) == 0
+          message: >-
+            One or more Prometheus textfile exports are stale beyond
+            their expected freshness window: ${{
+            data.latest("prom", "freshness").attributes.data.result }}
+          severity: high
+        dependsOn: []
+
+      - name: no-new-errors
+        allowFailure: false
+        task:
+          type: assert
+          expr: >-
+            data.latest("loki", "new-errors").attributes.totalCount == 0
+          message: >-
+            ${{ data.latest("loki", "new-errors").attributes.totalCount }}
+            new error-level log line(s) in the last 10 minutes (excluding
+            the known PCIe/rpi-connect/iss-tracker baseline noise) —
+            check the fun/core Loki streams.
+          severity: medium
+        dependsOn: []
+
+  - name: remediate
+    description: >-
+      Restart any unit found in a failed state during probe. Runs
+      regardless of the assert job's outcome — it reacts to each unit's
+      own live status, not to the aggregate gate.
+    dependsOn:
+      - job: probe
+        condition:
+          type: completed
+    steps:
+      - name: restart-${{ self.unit }}
+        forEach:
+          item: unit
+          in: ${{ inputs.units }}
+        guard: ${{ data.latest(self.unit, "status").attributes.lastRunStatus != "failed" }}
+        task:
+          type: model_method
+          modelIdOrName: ${{ self.unit }}
+          methodName: restart
+        dependsOn: []

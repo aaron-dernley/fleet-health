@@ -1,0 +1,10 @@
+type: '@dieter/prometheus'
+typeVersion: 2026.08.22.3
+id: cc8c8ce5-4799-41be-9698-5615110acf51
+name: prom
+version: 1
+tags: {}
+globalArguments:
+  baseUrl: 'http://localhost:9099'
+  timeoutSeconds: 30
+methods: {}

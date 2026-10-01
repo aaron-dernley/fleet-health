@@ -1,0 +1,10 @@
+type: '@aaronge/fleet-health-loki'
+typeVersion: 2026.10.01.1
+id: 6a5e32f1-1e1d-4dbb-a30d-5c231e805100
+name: loki
+version: 1
+tags: {}
+globalArguments:
+  baseUrl: 'http://localhost:3100'
+  timeoutSeconds: 30
+methods: {}

@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: c593f83e-5e3c-483f-b892-0b8f53d99603
+name: unit-rpi-gpio-inventory
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-rpi-gpio-inventory.timer
+  logUnit: swamp-workflow-rpi-gpio-inventory.service
+  kind: timer
+  label: rpi-gpio-inventory
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

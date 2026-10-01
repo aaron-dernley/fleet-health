@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: aa5cff66-931f-4e49-aaa2-935569a5bf5a
+name: unit-news-w-anchor
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-news-w-anchor.timer
+  logUnit: swamp-workflow-news-w-anchor.service
+  kind: timer
+  label: news-w-anchor
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

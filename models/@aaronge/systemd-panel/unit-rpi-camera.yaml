@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: 0025ea4d-0d77-4009-88aa-63ba9ec7e868
+name: unit-rpi-camera
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-rpi-camera.timer
+  logUnit: swamp-workflow-rpi-camera.service
+  kind: timer
+  label: rpi-camera
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}

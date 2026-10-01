@@ -1,0 +1,16 @@
+type: '@aaronge/systemd-panel'
+typeVersion: 2026.10.01.3
+id: f15a49d5-e074-499d-856e-9ca10f5ca79c
+name: unit-rpi-workflows-link-integrity
+version: 1
+tags: {}
+globalArguments:
+  unit: swamp-workflow-rpi-workflows-link-integrity.timer
+  logUnit: swamp-workflow-rpi-workflows-link-integrity.service
+  kind: timer
+  label: rpi-workflows-link-integrity
+  useSudo: true
+  systemctlPath: systemctl
+  journalctlPath: journalctl
+  sudoPath: sudo
+methods: {}
