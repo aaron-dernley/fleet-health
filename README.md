@@ -48,24 +48,30 @@ surfaced two real, previously-undiscovered issues, both fixed upstream:
   never matched. A real failure was silently reported as
   `lastRunStatus: "unknown"` instead of `"failed"`. Fixed in
   `2026.10.01.2`.
-- Five of the fifteen monitored units (`iss-tracker`,
-  `can-i-hang-my-washing-out`, `package-archaeology`,
-  `github-trending`, `rpi-metrics-bridge`) run their service via a
-  wrapper script calling `swamp model method run` directly rather than
-  `swamp workflow run`, so they never print a workflow-shaped journal
-  line at all — `lastRunStatus` was permanently `"unknown"` for all five,
-  regardless of real outcome. `systemd-panel` now falls back to
-  `systemctl show`'s own exit-state for a unit whose journal has nothing
-  recognizable, since that's set by systemd from the real exit code
-  independent of what the process printed. Fixed in `2026.10.01.3`.
+- Four of the fifteen monitored units (`iss-tracker`,
+  `can-i-hang-my-washing-out`, `package-archaeology`, `github-trending`)
+  run their service via a wrapper script calling `swamp model method
+  run` directly rather than `swamp workflow run`, so they never print a
+  workflow-shaped journal line at all — `lastRunStatus` was permanently
+  `"unknown"` for all four, regardless of real outcome. `systemd-panel`
+  now falls back to `systemctl show`'s own exit-state for a unit whose
+  journal has nothing recognizable, since that's set by systemd from the
+  real exit code independent of what the process printed. Fixed in
+  `2026.10.01.3`.
 
-**Known residual gap:** `rpi-metrics-bridge` still reports `"unknown"`
-even with the fallback — its per-run logging is verbose enough that the
-actual completion line sometimes falls outside the 40-line journal tail
-`systemd-panel` reads, and `systemctl show`'s `ActiveState` on a
-once-a-minute oneshot can catch it mid-run rather than freshly exited.
-This fails safe (reported as indeterminate, not wrongly "healthy") —
-worth another look if it matters, not fixed here.
+**Not a bug — `rpi-metrics-bridge` intermittently shows `"unknown"` for
+a genuine reason.** Unlike the four units above, it runs `swamp workflow
+run metrics-export` directly (same pattern as `host-health` etc.) and
+does print a recognizable completion line — but that job is currently
+taking minutes per run (as long as 2m47s observed) against its own
+once-a-minute schedule, a real, separate, already-tracked performance
+issue in that repo (a growing debsecan vulnerability scan — see its own
+README/issue tracker, not this one). `fleet-health`'s check sometimes
+catches it mid-run (`systemctl show` reports `ActiveState=activating`,
+no exit code yet to read), and correctly reports that as indeterminate
+rather than guessing — this is the fallback behaving exactly as
+designed given a real external slowdown, not a `systemd-panel` parsing
+gap. It'll resolve itself once that job's own performance is fixed.
 
 **Deliberately not done:** this workflow doesn't monitor its own
 `swamp-workflow-fleet-health` unit (no recursive self-registration). If
