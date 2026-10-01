@@ -10,14 +10,18 @@ description: >-
   unrelated process) just re-fails identically; (2) whether every
   Prometheus textfile export is still within its own expected freshness
   window; (3) new error-level log lines across both the "fun" and "core"
-  journald/Promtail/Loki families, deliberately excluding three
+  journald/Promtail/Loki families, deliberately excluding four
   already-characterized, already-visible conditions so this surfaces NET
-  NEW problems rather than re-alarming on known ones: the ongoing PCIe
-  link-degraded hardware fault (link-integrity has its own 5-minute
-  assert for that already), rpi-connect's expected "not signed in"
-  (explicitly non-blocking by its own design), and iss-tracker's
+  NEW problems rather than re-alarming on known ones (or on itself): the
+  ongoing PCIe link-degraded hardware fault (link-integrity has its own
+  5-minute assert for that already), rpi-connect's expected "not signed
+  in" (explicitly non-blocking by its own design), iss-tracker's
   occasional "fetch failed" against Open Notify's public HTTP API (no
-  SLA, self-heals on the next 5-minute retry). gatedUnits deliberately
+  SLA, self-heals on the next 5-minute retry), and fleet-health's own
+  unit — its own assert messages necessarily echo back words like
+  "failed"/"error" when reporting a problem found elsewhere, so without
+  this exclusion a run that found something wrong would pollute the
+  next run's count with its own diagnostic output. gatedUnits deliberately
   excludes rpi-workflows-link-integrity from the pass/fail gate for the
   same reason — it's still synced and restart-attempted via `units`
   (so it stays visible in the exported metrics), just not double-alarmed
@@ -136,9 +140,20 @@ jobs:
             # text-substring exclusion since it's specific to iss-tracker's
             # known-flaky public API call, not that unit's output as a
             # whole.
+            #
+            # swamp-workflow-fleet-health.service is ALSO excluded —
+            # self-referential, not forgotten. This check's own assert
+            # messages necessarily echo back words like "failed"/"error"
+            # whenever it reports a problem it found elsewhere (e.g.
+            # "<unit> is in a failed state", "N new error-level log
+            # line(s)"), so without this exclusion a run that found
+            # something wrong pollutes the NEXT run's count with its own
+            # diagnostic output — a feedback loop, not new signal. A
+            # restart genuinely failing is still visible independently via
+            # fleet_health_unit_up staying 0 for that unit.
             logql: >-
               count_over_time({family=~"fun|core",
-                unit!~"swamp-workflow-rpi-workflows-link-integrity.service|swamp-workflow-rpi-connect.service"}
+                unit!~"swamp-workflow-rpi-workflows-link-integrity.service|swamp-workflow-rpi-connect.service|swamp-workflow-fleet-health.service"}
                 |~ `(?i)error|failed|panic|exception|maximum call stack`
                 != `fetch failed`
               [10m])

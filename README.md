@@ -22,10 +22,10 @@ own right.
    `@dieter/prometheus`, against each export's own expected cadence.
 3. **New error-level log lines** across both the `fun` and `core`
    journald/Promtail/Loki families, via the local `fleet-health-loki`
-   model — deliberately excluding three already-characterized conditions
+   model — deliberately excluding four already-characterized conditions
    (by `unit` label, not fragile text matching) so this surfaces **net
    new** problems rather than re-alarming on ones already visible
-   elsewhere:
+   elsewhere (or on itself):
    - the ongoing PCIe link-degraded hardware fault
      (`rpi-workflows-link-integrity` has its own 5-minute assert for
      that already)
@@ -33,6 +33,13 @@ own right.
      its own design)
    - `iss-tracker`'s occasional `fetch failed` against Open Notify's
      public HTTP API (no SLA, self-heals on the next 5-minute retry)
+   - **`fleet-health`'s own unit** — a real bug found shortly after first
+     deployment (see below): its own assert messages necessarily echo
+     back words like "failed"/"error" whenever reporting a problem found
+     elsewhere ("`<unit>` is in a failed state", "N new error-level log
+     line(s)"), so without this exclusion a run that found something
+     wrong polluted the *next* run's own count — a feedback loop, not
+     new signal
 
    `rpi-workflows-link-integrity` is excluded from the pass/fail gate for
    the same reason (`gatedUnits` in the workflow's `inputs`) — it's still
